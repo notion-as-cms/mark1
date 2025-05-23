@@ -10,7 +10,15 @@ export const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 export const notionCustom = new NotionCompatAPI(notion);
 
-export const getPage = notionCustom.getPage.bind(notionCustom);
+export const getPage = async (pageId: string) => {
+  const recordMap = await notionCustom.getPage(pageId);
+  
+  return recordMap as typeof recordMap & {
+    raw: {
+      page: PageObjectResponse;
+    };
+  };
+}
 
 export async function getPublishedPosts() {
   return notion.databases.query({

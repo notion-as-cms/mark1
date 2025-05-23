@@ -6,7 +6,7 @@ import type { ExtendedRecordMap, Block, PageBlock } from "notion-types";
 
 // Type guard to check if a block is a page block
 function isPageBlock(block: Block): block is PageBlock {
-  return block.type === 'page';
+  return block.type === "page";
 }
 
 // Helper to find the first page block in the record map
@@ -37,8 +37,6 @@ export async function generateStaticParams() {
     }));
 }
 
-
-
 export default async function Page({
   params,
 }: {
@@ -49,22 +47,36 @@ export default async function Page({
   const recordMap = await getPage(post.id);
 
   // Log page title and tags
-  if ('properties' in post) {
+  if ("properties" in post) {
     const properties = post.properties as any; // Type assertion as the exact type is complex
-    
+
+    // console.log("properties tags", properties.Tags);
+
+    const tagPage = await getPage("1fc2478d-fa5b-8091-9a0d-c835f200e5c4");
+
+    console.log(
+      "tagPage 1",
+      tagPage?.raw?.page?.properties.Slug.rich_text[0].plain_text
+    );
+
     // Safely get title
-    const title = properties?.Name?.title?.[0]?.plain_text || 'No title';
-    
+    const title = properties?.Name?.title?.[0]?.plain_text || "No title";
+
     // Safely get tags
-    const tags = properties?.Tags?.multi_select?.map((tag: { name: string }) => tag.name) || 'No tags';
-    
-    console.log('Page Title:', title);
-    console.log('Tags:', tags);
+    const tags =
+      properties?.Tags?.multi_select?.map(
+        (tag: { name: string }) => tag.name
+      ) || "No tags";
+
+    console.log("Page Title:", title);
+    console.log("Tags:", tags);
   }
 
   // Find the page block and generate table of contents
   const pageBlock = findPageBlock(recordMap);
-  const tableOfContents = pageBlock ? getPageTableOfContents(pageBlock, recordMap) : [];
+  const tableOfContents = pageBlock
+    ? getPageTableOfContents(pageBlock, recordMap)
+    : [];
   const showTableOfContents = tableOfContents.length > 0;
 
   return (
@@ -76,10 +88,13 @@ export default async function Page({
             {tableOfContents.map((item, index) => {
               // Ensure item has required properties before rendering
               if (!item || !item.id || !item.text) return null;
-              
+
               return (
-                <li key={index} style={{ paddingLeft: `${(item.indentLevel || 0) * 16}px` }}>
-                  <a 
+                <li
+                  key={index}
+                  style={{ paddingLeft: `${(item.indentLevel || 0) * 16}px` }}
+                >
+                  <a
                     href={`#${item.id}`}
                     className="text-blue-600 hover:underline"
                   >
@@ -91,9 +106,9 @@ export default async function Page({
           </ul>
         </div>
       )}
-      <Renderer 
-        recordMap={recordMap} 
-        fullPage={false} 
+      <Renderer
+        recordMap={recordMap}
+        fullPage={false}
         darkMode={false}
         showTableOfContents={false}
       />
