@@ -5,20 +5,11 @@ import {
   PageObjectResponse,
   RichTextItemResponse,
 } from "@notionhq/client/build/src/api-endpoints";
+import type { PageInfo, Tag } from "@/types/notion";
 
 export const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 export const notionCustom = new NotionCompatAPI(notion);
-
-export interface PageInfo {
-  id: string;
-  title: string;
-  description: string;
-  createdAt: string;
-  lastEditedAt: string;
-  cover?: string;
-  icon?: string | null;
-}
 
 export const getPage = async (pageId: string, allTags?: Tag[]) => {
   const recordMap = await notionCustom.getPage(pageId);
@@ -66,12 +57,6 @@ export const getPage = async (pageId: string, allTags?: Tag[]) => {
   };
 };
 
-export interface Tag {
-  id: string;
-  value: string;
-  label: string;
-}
-
 export async function getTags(): Promise<Tag[]> {
   const response = await notion.databases.query({
     database_id: process.env.NOTION_TAG_DATABASE_ID!,
@@ -103,10 +88,6 @@ export async function getPageBySlug(slug: string) {
     },
   });
   return response.results[0];
-}
-
-export interface PageInfo {
-  title: string;
 }
 
 export function getPageInfo(page: PageObjectResponse): PageInfo {

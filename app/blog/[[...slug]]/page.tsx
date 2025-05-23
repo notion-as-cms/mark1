@@ -1,4 +1,9 @@
-import { getPage, getPageBySlug, getPublishedPosts, getTags } from "@/lib/notion";
+import {
+  getPage,
+  getPageBySlug,
+  getPublishedPosts,
+  getTags,
+} from "@/lib/notion";
 import { BlogList } from "@/components/blog/BlogList";
 import { BlogPost } from "@/components/blog/BlogPost";
 import { notFound } from "next/navigation";
@@ -25,12 +30,11 @@ export default async function Page(props: {
   const params = await props.params;
   const { slug = [] } = params;
   const postsResponse = await getPublishedPosts();
-  const posts = (Array.isArray(postsResponse) ? postsResponse : postsResponse.results || []) as NotionPage[];
+  const posts = (
+    Array.isArray(postsResponse) ? postsResponse : postsResponse.results || []
+  ) as NotionPage[];
   const tags = await getTags();
   const pageParams = { slug };
-
-  // Import the constant
-  const POSTS_PER_PAGE_VALUE = POSTS_PER_PAGE;
 
   // Handle blog post page
   if (isBlogPostPage(pageParams)) {
@@ -39,7 +43,7 @@ export default async function Page(props: {
       return <div className="max-w-3xl mx-auto p-4">Invalid post URL</div>;
     }
 
-    const post = posts.find((p) => p.id === postSlug) as NotionPage | undefined;
+    const post = await getPageBySlug(postSlug);
     if (!post) {
       return <div className="max-w-3xl mx-auto p-4">Post not found</div>;
     }

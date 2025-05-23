@@ -1,5 +1,4 @@
-import { Tag } from "@/lib/notion";
-import type { BlogPost, NotionPage } from "@/types/notion";
+import type { BlogPost, NotionPage, Tag } from "@/types/notion";
 
 export function isNotionPage(page: any): page is NotionPage {
   return page && typeof page === "object" && "properties" in page;

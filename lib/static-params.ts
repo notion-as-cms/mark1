@@ -1,23 +1,9 @@
-import { getPublishedPosts, getTags, type Tag } from "./notion";
+import { getPublishedPosts, getTags } from "./notion";
+import { isNotionPage } from "./notion-mappers";
+import type { NotionPage } from "@/types/notion";
 
 type StaticParam = { slug: string[] };
 const POSTS_PER_PAGE = 3;
-
-type NotionPage = {
-  id: string;
-  properties: {
-    Tags?: {
-      id: string;
-      type: "relation";
-      relation: Array<{ id: string }>;
-    };
-    [key: string]: any;
-  };
-};
-
-function isNotionPage(page: any): page is NotionPage {
-  return page && typeof page === "object" && "properties" in page;
-}
 
 export async function generateBlogStaticParams() {
   const allParams: StaticParam[] = [];
@@ -88,7 +74,7 @@ async function generateTagPathParams(): Promise<StaticParam[]> {
   for (const post of posts) {
     if (isNotionPage(post)) {
       const tagsProperty = post.properties.Tags;
-      if (tagsProperty?.type === "relation") {
+      if (tagsProperty) {
         const tagIds = tagsProperty.relation?.map((r) => r.id) || [];
         console.log(`Post ${post.id} has tags:`, tagIds);
         tagIds.forEach((tagId: string) => {
@@ -97,11 +83,13 @@ async function generateTagPathParams(): Promise<StaticParam[]> {
       }
     }
   }
-  
+
   // Debug: Log the post count for each tag
-  console.log('Tag post counts:');
-  tags.forEach(tag => {
-    console.log(`- ${tag.label} (${tag.id}): ${tagPostCounts.get(tag.id) || 0} posts`);
+  console.log("Tag post counts:");
+  tags.forEach((tag) => {
+    console.log(
+      `- ${tag.label} (${tag.id}): ${tagPostCounts.get(tag.id) || 0} posts`
+    );
   });
 
   // Generate paths for each tag
