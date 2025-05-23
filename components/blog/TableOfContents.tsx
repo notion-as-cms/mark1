@@ -1,35 +1,56 @@
 import { getPageTableOfContents } from "notion-utils";
-import type { TableOfContentsProps } from "@/types/notion";
 
-export function TableOfContents({ pageBlock, recordMap }: TableOfContentsProps) {
+interface TableOfContentsItem {
+  id: string;
+  text: string;
+  indentLevel: number;
+}
+
+export type TOCItemType = {
+  title: React.ReactNode;
+  url: string;
+  depth: number;
+};
+
+export type TableOfContents = TOCItemType[];
+
+export function convertToTOC(items: TableOfContentsItem[]): TableOfContents {
+  return items
+    .filter((item): item is TableOfContentsItem => !!item?.id && !!item?.text)
+    .map((item) => ({
+      title: item.text,
+      url: `#${item.id}`,
+      depth: item.indentLevel || 0,
+    }));
+}
+
+export function TableOfContents({ pageBlock, recordMap }: { pageBlock: any, recordMap: any }) {
   if (!pageBlock || !recordMap) return null;
   
   try {
     const tableOfContents = getPageTableOfContents(pageBlock, recordMap);
     if (!tableOfContents || tableOfContents.length === 0) return null;
 
+    const items = convertToTOC(tableOfContents);
+
     return (
-      <div className="mb-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <h2 className="text-lg font-semibold mb-2">Table of Contents</h2>
-        <ul className="space-y-1">
-          {tableOfContents.map((item, index) => {
-            if (!item?.id || !item?.text) return null;
-            
-            return (
-              <li
-                key={`${item.id}-${index}`}
-                style={{ paddingLeft: `${(item.indentLevel || 0) * 16}px` }}
-                className="text-sm"
+      <div className="sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
+        <h3 className="text-sm font-medium mb-4 text-foreground">On This Page</h3>
+        <ul className="space-y-2 text-sm">
+          {items.map((item, index) => (
+            <li
+              key={index}
+              style={{ marginLeft: `${item.depth * 12}px` }}
+              className="truncate"
+            >
+              <a
+                href={item.url}
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                <a
-                  href={`#${item.id}`}
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {item.text}
-                </a>
-              </li>
-            );
-          })}
+                {item.title}
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
     );
