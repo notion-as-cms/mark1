@@ -116,7 +116,9 @@ export function BlogPost({ recordMap }: BlogPostProps) {
             }}
           >
             <DocsBody>
-              <div className="prose dark:prose-invert max-w-none">
+              <div className="prose dark:prose-invert max-w-none" style={{
+                '--notion-max-width': '100%'
+              } as React.CSSProperties}>
                 <Renderer
                   recordMap={recordMap}
                   fullPage={false}
