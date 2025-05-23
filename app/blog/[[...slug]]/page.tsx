@@ -1,13 +1,10 @@
-import {
-  getPageBySlug,
-  getPage,
-  getTags,
-  getPublishedPosts,
-} from "@/lib/notion";
-import { BlogPost } from "@/components/blog/BlogPost";
-import { generateBlogStaticParams } from "@/lib/static-params";
+import { getPage, getPageBySlug, getPublishedPosts, getTags } from "@/lib/notion";
 import { BlogList } from "@/components/blog/BlogList";
-import { mapNotionPostToBlogPost } from "@/lib/notion-mappers";
+import { BlogPost } from "@/components/blog/BlogPost";
+import { notFound } from "next/navigation";
+import { generateBlogStaticParams } from "@/lib/static-params";
+import { POSTS_PER_PAGE } from "@/lib/constants";
+import type { NotionPage } from "@/types/notion";
 import {
   isBlogRootPage,
   isBlogPostPage,
@@ -27,12 +24,13 @@ export default async function Page(props: {
 }) {
   const params = await props.params;
   const { slug = [] } = params;
-  const posts = await getPublishedPosts();
+  const postsResponse = await getPublishedPosts();
+  const posts = (Array.isArray(postsResponse) ? postsResponse : postsResponse.results || []) as NotionPage[];
   const tags = await getTags();
   const pageParams = { slug };
 
   // Import the constant
-  const { POSTS_PER_PAGE } = await import("@/lib/constants");
+  const POSTS_PER_PAGE_VALUE = POSTS_PER_PAGE;
 
   // Handle blog post page
   if (isBlogPostPage(pageParams)) {
@@ -41,7 +39,7 @@ export default async function Page(props: {
       return <div className="max-w-3xl mx-auto p-4">Invalid post URL</div>;
     }
 
-    const post = await getPageBySlug(postSlug);
+    const post = posts.find((p) => p.id === postSlug) as NotionPage | undefined;
     if (!post) {
       return <div className="max-w-3xl mx-auto p-4">Post not found</div>;
     }
@@ -61,9 +59,9 @@ export default async function Page(props: {
       return <div className="max-w-3xl mx-auto p-4">Tag not found</div>;
     }
 
-    const taggedPosts = posts.results.filter((post: any) => {
-      const tags = post.properties?.Tags?.relation || [];
-      return tags.some((t: { id: string }) => t.id === tag.id);
+    const taggedPosts = posts.filter((post) => {
+      const postTags = post.properties?.Tags?.relation || [];
+      return postTags.some((t: { id: string }) => t.id === tag.id);
     });
 
     return (
@@ -82,7 +80,7 @@ export default async function Page(props: {
   if (isBlogRootPage(pageParams) || isPaginatedBlogPage(pageParams)) {
     return (
       <BlogList
-        posts={posts.results}
+        posts={posts}
         tags={tags}
         pageParams={pageParams}
         isPaginated={true}

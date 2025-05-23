@@ -1,34 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Pagination } from "@/components/blog/pagination";
-
-export type BlogPost = {
-  id: string;
-  url: string;
-  data: {
-    title: string;
-    description: string;
-    date: string;
-    author?: string;
-    tags?: string[];
-  };
-};
-
-type BlogConfiguration = {
-  pageSize?: number;
-  basePath?: string;
-};
-
-type PostListProps = {
-  posts: (BlogPost | null)[];
-  currentPage: number;
-  totalPages: number;
-  heading?: string;
-  description?: string;
-  basePath?: string;
-  disablePagination?: boolean;
-  configuration?: BlogConfiguration;
-};
+import type { BlogPost, PostListProps } from "@/types/notion";
 
 export function PostList({
   posts,
@@ -70,34 +43,45 @@ export function PostList({
   );
 }
 
-function PostCard({ post }: { post: BlogPost | null }) {
-  if (!post) return null;
+function PostCard({ post }: { post: BlogPost }) {
+  const { title, description, author, date, tags = [] } = post.data;
+  
   return (
     <article className="group grid gap-8 md:grid-cols-2 md:gap-8 lg:gap-12">
       <div className="order-last md:order-first">
-        <div className="mb-3 flex flex-wrap gap-2">
-          {post.data.tags?.map((tag) => (
-            <span
-              key={tag}
-              className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {tags.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         <h2 className="text-2xl font-bold mb-3 group-hover:underline">
-          <Link href={post.url}>{post.data.title}</Link>
+          <Link href={post.url}>{title}</Link>
         </h2>
-        <p className="text-muted-foreground mb-4">{post.data.description}</p>
+        {description && (
+          <p className="text-muted-foreground mb-4">{description}</p>
+        )}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            <span>{post.data.author || 'Anonymous'}</span>
-            <span className="mx-2">•</span>
-            <span>{new Date(post.data.date).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}</span>
+            {author && (
+              <>
+                <span>{author}</span>
+                <span className="mx-2">•</span>
+              </>
+            )}
+            <span>
+              {new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </span>
           </div>
           <Link
             href={post.url}
@@ -112,7 +96,7 @@ function PostCard({ post }: { post: BlogPost | null }) {
         <Link href={post.url} className="block h-full w-full">
           <img
             src={`https://picsum.photos/800/450?random=${post.id}&grayscale`}
-            alt={post.data.title}
+            alt={title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </Link>

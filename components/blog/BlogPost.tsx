@@ -1,22 +1,14 @@
 import { Renderer } from "./renderer";
-import type { ExtendedRecordMap } from "notion-types";
 import { TableOfContents } from "./TableOfContents";
 import { findPageBlock } from "@/lib/notion-utils";
 import Image from "next/image";
 import Link from "next/link";
-
-interface BlogPostProps {
-  recordMap: ExtendedRecordMap & {
-    pageInfo?: {
-      tags?: Array<{ id: string; label: string; value: string }>;
-      cover?: string;
-    };
-  };
-}
+import type { BlogPostProps, Tag } from "@/types/notion";
 
 export function BlogPost({ recordMap }: BlogPostProps) {
   const pageBlock = findPageBlock(recordMap);
   const { tags = [], cover } = recordMap.pageInfo || {};
+  const safeTags = (tags as Tag[]) || [];
 
   return (
     <article className="max-w-4xl mx-auto">
@@ -29,15 +21,16 @@ export function BlogPost({ recordMap }: BlogPostProps) {
             fill
             className="object-cover"
             priority
+            sizes="(max-width: 768px) 100vw, 75vw"
           />
         </div>
       )}
 
       <div className="px-4">
         {/* Tags */}
-        {tags && tags.length > 0 && (
+        {safeTags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
-            {tags.map((tag) => (
+            {safeTags.map((tag) => (
               <Link
                 key={tag.id}
                 href={`/blog/tag/${tag.value}`}

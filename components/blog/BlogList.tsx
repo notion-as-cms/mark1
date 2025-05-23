@@ -1,17 +1,9 @@
 import { PostList } from "./PostList";
 import { mapNotionPostToBlogPost } from "@/lib/notion-mappers";
-import type { BlogPost } from "./PostList";
+import type { BlogPost, BlogListProps, NotionPage, Tag } from "@/types/notion";
+import { POSTS_PER_PAGE } from "@/lib/constants";
 
-type BlogListProps = {
-  posts: any[];
-  tags: any[];
-  pageParams: { slug?: string[] };
-  isPaginated: boolean;
-  heading?: string;
-  basePath?: string;
-};
-
-export async function BlogList({
+export function BlogList({
   posts,
   tags,
   pageParams,
@@ -19,26 +11,27 @@ export async function BlogList({
   heading = "Latest Posts",
   basePath = "/blog",
 }: BlogListProps) {
-  const { POSTS_PER_PAGE } = await import('@/lib/constants');
   const currentPage = isPaginated ? getPageNumber(pageParams) : 1;
   
-  // Map all posts, keeping null values
+  // Map all posts, filtering out any null or invalid posts
   const allBlogPosts = posts
-    .map(post => mapNotionPostToBlogPost(post, tags));
+    .map(post => mapNotionPostToBlogPost(post, tags))
+    .filter((post): post is BlogPost => post !== null);
 
-  // Apply pagination if enabled
-  const paginatedPosts = isPaginated
+  // Calculate total pages based on all valid posts
+  const totalPages = Math.ceil(allBlogPosts.length / POSTS_PER_PAGE);
+  
+  // Apply pagination if enabled, otherwise show all posts
+  const displayedPosts = isPaginated
     ? allBlogPosts.slice(
         (currentPage - 1) * POSTS_PER_PAGE,
         currentPage * POSTS_PER_PAGE
       )
     : allBlogPosts;
 
-  const totalPages = Math.ceil(allBlogPosts.length / POSTS_PER_PAGE);
-
   return (
     <PostList
-      posts={paginatedPosts}
+      posts={displayedPosts}
       currentPage={currentPage}
       totalPages={totalPages}
       heading={heading}
