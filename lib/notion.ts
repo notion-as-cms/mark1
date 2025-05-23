@@ -10,14 +10,49 @@ export const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 export const notionCustom = new NotionCompatAPI(notion);
 
-export const getPage = async (pageId: string) => {
+export const getPage = async (pageId: string, allTags?: Tag[]) => {
   const recordMap = await notionCustom.getPage(pageId);
-  
-  return recordMap as typeof recordMap & {
+  const rawPage = (recordMap as any).raw?.page;
+
+  let blogTags: Tag[] = [];
+
+  if (rawPage && allTags) {
+    const tagIds =
+      rawPage.properties?.Tags?.relation?.map((r: any) => r.id) || [];
+    blogTags = allTags.filter((tag) => tagIds.includes(tag.id));
+  }
+
+  return {
+    ...recordMap,
+    blogTags,
+    raw: {
+      ...(recordMap as any).raw,
+      page: rawPage,
+    },
+  } as typeof recordMap & {
+    blogTags: Tag[];
     raw: {
       page: PageObjectResponse;
     };
   };
+};
+
+export interface Tag {
+  id: string;
+  value: string;
+  label: string;
+}
+
+export async function getTags(): Promise<Tag[]> {
+  const response = await notion.databases.query({
+    database_id: process.env.NOTION_TAG_DATABASE_ID!,
+  });
+
+  return response.results.map((page: any) => ({
+    id: page.id,
+    value: page.properties.Slug.rich_text[0]?.plain_text || "",
+    label: page.properties.Name.title[0]?.plain_text || "",
+  }));
 }
 
 export async function getPublishedPosts() {

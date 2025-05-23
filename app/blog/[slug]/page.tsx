@@ -1,4 +1,9 @@
-import { getPageBySlug, getPublishedPosts, getPage } from "@/lib/notion";
+import {
+  getPageBySlug,
+  getPublishedPosts,
+  getPage,
+  getTags,
+} from "@/lib/notion";
 import { Renderer } from "./renderer";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { getPageTableOfContents } from "notion-utils";
@@ -44,7 +49,10 @@ export default async function Page({
 }) {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
-  const recordMap = await getPage(post.id);
+  const tags = await getTags();
+  const recordMap = await getPage(post.id, tags);
+
+  console.log("tags", tags, recordMap);
 
   // Log page title and tags
   if ("properties" in post) {
@@ -54,10 +62,10 @@ export default async function Page({
 
     const tagPage = await getPage("1fc2478d-fa5b-8091-9a0d-c835f200e5c4");
 
-    console.log(
-      "tagPage 1",
-      tagPage?.raw?.page?.properties.Slug.rich_text[0].plain_text
-    );
+    // console.log(
+    //   "tagPage 1",
+    //   tagPage?.raw?.page?.properties.Slug.rich_text[0].plain_text
+    // );
 
     // Safely get title
     const title = properties?.Name?.title?.[0]?.plain_text || "No title";
