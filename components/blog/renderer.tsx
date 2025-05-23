@@ -52,6 +52,7 @@ export function Renderer(props: ComponentProps<typeof NotionRenderer>) {
         nextLink: Link,
         Code,
       }}
+      previewImages={false}
     />
   );
 }

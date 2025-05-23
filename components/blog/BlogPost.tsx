@@ -97,7 +97,7 @@ export function BlogPost({ recordMap }: BlogPostProps) {
         containerProps={{
           className: cn(
             "flex-row-reverse",
-            "relative container [--fd-nav-height:calc(var(--spacing)*14)] md:[--fd-nav-height:57px]"
+            "relative container [--fd-nav-height:calc(var(--spacing)*14)] md:[--fd-nav-height:57px] p-0"
           ),
         }}
       >
@@ -116,9 +116,14 @@ export function BlogPost({ recordMap }: BlogPostProps) {
             }}
           >
             <DocsBody>
-              <div className="prose dark:prose-invert max-w-none" style={{
-                '--notion-max-width': '100%'
-              } as React.CSSProperties}>
+              <div
+                className="prose dark:prose-invert max-w-none"
+                style={
+                  {
+                    "--notion-max-width": "100%",
+                  } as React.CSSProperties
+                }
+              >
                 <Renderer
                   recordMap={recordMap}
                   fullPage={false}
