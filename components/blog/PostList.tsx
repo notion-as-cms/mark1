@@ -20,7 +20,7 @@ type BlogConfiguration = {
 };
 
 type PostListProps = {
-  posts: BlogPost[];
+  posts: (BlogPost | null)[];
   currentPage: number;
   totalPages: number;
   heading?: string;
@@ -53,7 +53,7 @@ export function PostList({
 
       <section className="space-y-12">
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          post ? <PostCard key={post.id} post={post} /> : null
         ))}
       </section>
 
@@ -70,7 +70,8 @@ export function PostList({
   );
 }
 
-function PostCard({ post }: { post: BlogPost }) {
+function PostCard({ post }: { post: BlogPost | null }) {
+  if (!post) return null;
   return (
     <article className="group grid gap-8 md:grid-cols-2 md:gap-8 lg:gap-12">
       <div className="order-last md:order-first">

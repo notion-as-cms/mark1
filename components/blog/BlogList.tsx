@@ -22,10 +22,9 @@ export async function BlogList({
   const { POSTS_PER_PAGE } = await import('@/lib/constants');
   const currentPage = isPaginated ? getPageNumber(pageParams) : 1;
   
-  // Map all posts first and filter out null values with type assertion
+  // Map all posts, keeping null values
   const allBlogPosts = posts
-    .map(post => mapNotionPostToBlogPost(post, tags))
-    .filter((post): post is BlogPost => post !== null);
+    .map(post => mapNotionPostToBlogPost(post, tags));
 
   // Apply pagination if enabled
   const paginatedPosts = isPaginated
