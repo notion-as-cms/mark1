@@ -31,26 +31,29 @@ function isNotionPage(page: any): page is NotionPage {
 
 export { generateBlogStaticParams as generateStaticParams };
 
-// Helper functions to determine page type
-const isBlogRoot = (slug?: string[]) => !slug || slug.length === 0;
-const isBlogPost = (slug?: string[]) => slug?.length === 1;
-const isTagPage = (slug?: string[]) => slug?.[0] === "tag" && slug.length >= 2;
-const isPaginationPage = (slug?: string[]) =>
-  slug?.[0] === "page" && !isNaN(Number(slug[1]));
-const isTagPaginationPage = (slug?: string[]) =>
-  slug?.[0] === "tag" && slug[2] === "page" && !isNaN(Number(slug[3]));
+import {
+  isBlogRootPage,
+  isBlogPostPage,
+  isTagPage,
+  isPaginatedTagPage,
+  isPaginatedBlogPage,
+  getTagSlug,
+  getPageNumber,
+  getPostSlug,
+} from "@/lib/page-utils";
 
 // Main page component
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
 }) {
   const params = await props.params;
-  const { slug } = params;
+  const { slug = [] } = params;
   const posts = await getPublishedPosts();
   const tags = await getTags();
+  const pageParams = { slug };
 
   // Blog root page (/) - Show latest posts
-  if (isBlogRoot(slug)) {
+  if (isBlogRootPage(pageParams)) {
     return (
       <div className="max-w-3xl mx-auto p-4">
         <h1 className="text-3xl font-bold mb-8">Latest Posts</h1>
@@ -71,15 +74,16 @@ export default async function Page(props: {
   }
 
   // Single blog post (/slug)
-  if (isBlogPost(slug) && slug?.[0]) {
-    const post = await getPageBySlug(slug[0]);
+  const postSlug = getPostSlug(pageParams);
+  if (postSlug) {
+    const post = await getPageBySlug(postSlug);
     const recordMap = await getPage(post.id, tags);
     return <BlogPost recordMap={recordMap} />;
   }
 
   // Tag page (/tag/tag-name) or tag pagination (/tag/tag-name/page/2)
-  if ((isTagPage(slug) || isTagPaginationPage(slug)) && slug?.[1]) {
-    const tagSlug = slug[1];
+  const tagSlug = getTagSlug(pageParams);
+  if (tagSlug) {
     const tag = tags.find((t) => t.value === tagSlug);
 
     if (!tag) {
@@ -87,7 +91,7 @@ export default async function Page(props: {
     }
 
     // Get current page number (default to 1 for non-paginated tag page)
-    const currentPage = isTagPaginationPage(slug) ? Number(slug[3]) : 1;
+    const currentPage = getPageNumber(pageParams);
 
     // Filter posts by tag
     const taggedPosts = posts.results.filter((post) => {
@@ -163,8 +167,8 @@ export default async function Page(props: {
   }
 
   // Pagination (/page/2)
-  if (isPaginationPage(slug)) {
-    const page = Number(slug?.[1]) || 1;
+  if (isPaginatedBlogPage(pageParams)) {
+    const page = getPageNumber(pageParams);
     return (
       <div className="max-w-3xl mx-auto p-4">
         <h1 className="text-3xl font-bold mb-8">Page {page}</h1>
