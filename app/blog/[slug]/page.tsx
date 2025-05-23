@@ -48,6 +48,20 @@ export default async function Page({
   const post = await getPageBySlug(slug);
   const recordMap = await getPage(post.id);
 
+  // Log page title and tags
+  if ('properties' in post) {
+    const properties = post.properties as any; // Type assertion as the exact type is complex
+    
+    // Safely get title
+    const title = properties?.Name?.title?.[0]?.plain_text || 'No title';
+    
+    // Safely get tags
+    const tags = properties?.Tags?.multi_select?.map((tag: { name: string }) => tag.name) || 'No tags';
+    
+    console.log('Page Title:', title);
+    console.log('Tags:', tags);
+  }
+
   // Find the page block and generate table of contents
   const pageBlock = findPageBlock(recordMap);
   const tableOfContents = pageBlock ? getPageTableOfContents(pageBlock, recordMap) : [];
