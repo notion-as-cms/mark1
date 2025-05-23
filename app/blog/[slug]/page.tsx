@@ -7,10 +7,19 @@ import {
 
 export async function generateStaticParams() {
   const posts = await getPublishedPosts();
-  const results: DatabaseObjectResponse[] = posts.results;
-  return results.map((post) => ({
-    slug: post.properties.Slug.rich_text[0].plain_text,
-  }));
+  return posts.results
+    .filter((post): post is PageObjectResponse => {
+      if (!("properties" in post)) return false;
+      const slugProp = post.properties.Slug;
+      return (
+        slugProp?.type === "rich_text" &&
+        Array.isArray(slugProp.rich_text) &&
+        slugProp.rich_text.length > 0
+      );
+    })
+    .map((post) => ({
+      slug: (post.properties.Slug as any).rich_text[0].plain_text,
+    }));
 }
 
 const getPage = async (id: string) => {
