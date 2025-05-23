@@ -2,13 +2,18 @@ import { getPageBySlug, getPublishedPosts, getPage } from "@/lib/notion";
 import { Renderer } from "./renderer";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 import { getPageTableOfContents } from "notion-utils";
-import type { ExtendedRecordMap, Block } from "notion-types";
+import type { ExtendedRecordMap, Block, PageBlock } from "notion-types";
+
+// Type guard to check if a block is a page block
+function isPageBlock(block: Block): block is PageBlock {
+  return block.type === 'page';
+}
 
 // Helper to find the first page block in the record map
-function findPageBlock(recordMap: ExtendedRecordMap): Block | null {
+function findPageBlock(recordMap: ExtendedRecordMap): PageBlock | null {
   for (const blockId in recordMap.block) {
     const block = recordMap.block[blockId]?.value;
-    if (block?.type === 'page' || block?.type === 'collection_view_page') {
+    if (block && isPageBlock(block)) {
       return block;
     }
   }
@@ -43,17 +48,40 @@ export default async function Page({
   const post = await getPageBySlug(slug);
   const recordMap = await getPage(post.id);
 
-  // Find the page block for table of contents
+  // Find the page block and generate table of contents
   const pageBlock = findPageBlock(recordMap);
-  const showTableOfContents = Boolean(pageBlock);
+  const tableOfContents = pageBlock ? getPageTableOfContents(pageBlock, recordMap) : [];
+  const showTableOfContents = tableOfContents.length > 0;
 
   return (
     <div className="max-w-3xl mx-auto p-4 bg-red-50">
+      {showTableOfContents && (
+        <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+          <h2 className="text-lg font-semibold mb-2">Table of Contents</h2>
+          <ul className="space-y-1">
+            {tableOfContents.map((item, index) => {
+              // Ensure item has required properties before rendering
+              if (!item || !item.id || !item.text) return null;
+              
+              return (
+                <li key={index} style={{ paddingLeft: `${(item.indentLevel || 0) * 16}px` }}>
+                  <a 
+                    href={`#${item.id}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {item.text}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
       <Renderer 
         recordMap={recordMap} 
         fullPage={false} 
         darkMode={false}
-        showTableOfContents={showTableOfContents}
+        showTableOfContents={false}
       />
     </div>
   );
