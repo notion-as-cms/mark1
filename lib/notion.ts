@@ -49,14 +49,16 @@ export const getPage = async (pageId: string, allTags?: Tag[]) => {
 
   return {
     ...recordMap,
-    blogTags,
-    pageInfo,
+    pageInfo: {
+      ...pageInfo,
+      tags: blogTags, // Include tags in the page info
+      cover: pageInfo.cover, // Include cover URL
+    },
     raw: {
       ...(recordMap as any).raw,
       page: rawPage,
     },
   } as typeof recordMap & {
-    blogTags: Tag[];
     pageInfo: PageInfo;
     raw: {
       page: PageObjectResponse;

@@ -46,7 +46,13 @@ export default async function Page(props: {
       return <div className="max-w-3xl mx-auto p-4">Post not found</div>;
     }
     const recordMap = await getPage(post.id, tags);
-    return <BlogPost recordMap={recordMap} />;
+    return <BlogPost recordMap={{
+      ...recordMap,
+      pageInfo: {
+        ...recordMap.pageInfo,
+        tags // Pass the tags to the BlogPost component
+      }
+    }} />;
   }
 
   // Handle tag pages (both paginated and non-paginated)

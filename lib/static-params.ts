@@ -79,6 +79,8 @@ async function generateTagPathParams(): Promise<StaticParam[]> {
     getPublishedPosts(),
   ]);
 
+  console.log("tags", tags);
+
   const allParams: StaticParam[] = [];
   const tagPostCounts = new Map<string, number>();
 
@@ -88,12 +90,19 @@ async function generateTagPathParams(): Promise<StaticParam[]> {
       const tagsProperty = post.properties.Tags;
       if (tagsProperty?.type === "relation") {
         const tagIds = tagsProperty.relation?.map((r) => r.id) || [];
+        console.log(`Post ${post.id} has tags:`, tagIds);
         tagIds.forEach((tagId: string) => {
           tagPostCounts.set(tagId, (tagPostCounts.get(tagId) || 0) + 1);
         });
       }
     }
   }
+  
+  // Debug: Log the post count for each tag
+  console.log('Tag post counts:');
+  tags.forEach(tag => {
+    console.log(`- ${tag.label} (${tag.id}): ${tagPostCounts.get(tag.id) || 0} posts`);
+  });
 
   // Generate paths for each tag
   for (const tag of tags) {
