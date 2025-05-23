@@ -47,59 +47,54 @@ function PostCard({ post }: { post: BlogPost }) {
   const { title, description, author, date, tags = [] } = post.data;
   
   return (
-    <article className="group grid gap-8 md:grid-cols-2 md:gap-8 lg:gap-12">
-      <div className="order-last md:order-first">
-        {tags.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground"
-              >
-                {tag}
-              </span>
-            ))}
+    <article className="group">
+      <div className="grid gap-y-6 sm:grid-cols-10 sm:gap-x-5 sm:gap-y-0 md:items-center md:gap-x-8 lg:gap-x-12">
+        <div className="sm:col-span-5">
+          <div className="mb-4 md:mb-6">
+            <div className="flex flex-wrap gap-3 text-xs uppercase tracking-wider text-muted-foreground md:gap-5 lg:gap-6">
+              {tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
           </div>
-        )}
-        <h2 className="text-2xl font-bold mb-3 group-hover:underline">
-          <Link href={post.url}>{title}</Link>
-        </h2>
-        {description && (
-          <p className="text-muted-foreground mb-4">{description}</p>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            {author && (
-              <>
-                <span>{author}</span>
-                <span className="mx-2">•</span>
-              </>
-            )}
-            <span>
-              {new Date(date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+          <h3 className="text-xl font-semibold md:text-2xl lg:text-3xl text-left">
+            <Link href={post.url} className="hover:underline cursor-pointer">
+              {title}
+            </Link>
+          </h3>
+          <p className="mt-4 text-muted-foreground md:mt-5 text-left">
+            {description}
+          </p>
+          <div className="mt-6 flex items-center space-x-4 text-sm md:mt-8">
+            <span className="text-muted-foreground capitalize">
+              {author || "Anonymous"}
+            </span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">
+              {new Date(date).toDateString()}
             </span>
           </div>
-          <Link
-            href={post.url}
-            className="inline-flex items-center text-sm font-medium text-primary hover:underline"
-          >
-            Read more
-            <ArrowRight className="ml-1 h-4 w-4" />
+          <div className="mt-6 flex items-center space-x-2 md:mt-8">
+            <Link
+              href={post.url}
+              className="inline-flex items-center font-semibold hover:underline md:text-base"
+            >
+              <span>Read more</span>
+              <ArrowRight className="ml-2 size-4 transition-transform" />
+            </Link>
+          </div>
+        </div>
+        <div className="order-first sm:order-last sm:col-span-5">
+          <Link href={post.url} className="block">
+            <div className="aspect-[16/9] overflow-clip rounded-lg border border-border">
+              <img
+                src={`https://picsum.photos/400/225?grayscale&title=${title}`}
+                alt={title}
+                className="h-full w-full object-cover transition-opacity duration-200 fade-in hover:opacity-70"
+              />
+            </div>
           </Link>
         </div>
-      </div>
-      <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
-        <Link href={post.url} className="block h-full w-full">
-          <img
-            src={`https://picsum.photos/800/450?random=${post.id}&grayscale`}
-            alt={title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        </Link>
       </div>
     </article>
   );
