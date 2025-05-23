@@ -82,6 +82,7 @@ jobs:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_BLOG_DATABASE_ID: ${{ secrets.NOTION_BLOG_DATABASE_ID }}
           NOTION_TAG_DATABASE_ID: ${{ secrets.NOTION_TAG_DATABASE_ID }}
+          NOTION_AUTHOR_DATABASE_ID: ${{ secrets.NOTION_AUTHOR_DATABASE_ID }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
