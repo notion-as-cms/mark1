@@ -108,16 +108,39 @@ export interface PageInfo {
 }
 
 export function getPageInfo(page: PageObjectResponse): PageInfo {
-  const info: PageInfo = { title: "unknown" };
-  const keys = Object.keys(page.properties);
-
-  for (const key of keys) {
-    if (page.properties[key].type === "title") {
-      info.title = getPlainText(page.properties[key].title);
+  const properties = page.properties;
+  
+  // Helper to get icon URL
+  const getIconUrl = () => {
+    if (!page.icon) return null;
+    
+    switch (page.icon.type) {
+      case 'emoji':
+        return page.icon.emoji;
+      case 'external':
+        return page.icon.external.url;
+      case 'file':
+        return page.icon.file.url;
+      default:
+        return null;
     }
-  }
-
-  return info;
+  };
+  
+  return {
+    id: page.id,
+    title: properties?.Name?.type === 'title' 
+      ? getPlainText(properties.Name.title) 
+      : 'No title',
+    description: properties?.Description?.type === 'rich_text'
+      ? getPlainText(properties.Description.rich_text)
+      : '',
+    createdAt: page.created_time,
+    lastEditedAt: page.last_edited_time,
+    cover: page.cover?.type === 'external' 
+      ? page.cover.external.url 
+      : (page.cover as any)?.file?.url, // Type assertion as cover type is complex
+    icon: getIconUrl()
+  };
 }
 
 export function getPlainText(rich: RichTextItemResponse[]): string {
