@@ -76,21 +76,33 @@ export default async function Page(props: {
   const posts = await getPublishedPosts();
   const tags = await getTags();
   const pageParams = { slug };
-  const pageSize = 5; // Should match POSTS_PER_PAGE from static-params.ts
+  
+  // Import the constant
+  const { POSTS_PER_PAGE } = await import('@/lib/constants');
 
-  // Blog root page (/) - Show latest posts
-  if (isBlogRootPage(pageParams)) {
-    const blogPosts = posts.results
+  // Blog root page (/) - Show latest posts with pagination
+  if (isBlogRootPage(pageParams) || isPaginatedBlogPage(pageParams)) {
+    const currentPage = isPaginatedBlogPage(pageParams) ? getPageNumber(pageParams) : 1;
+    
+    // Map all posts first
+    const allBlogPosts = posts.results
       .map(post => mapNotionPostToBlogPost(post, tags))
       .filter(Boolean);
 
+    // Apply pagination
+    const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+    const endIndex = startIndex + POSTS_PER_PAGE;
+    const paginatedPosts = allBlogPosts.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(allBlogPosts.length / POSTS_PER_PAGE);
+
     return (
       <PostList
-        posts={blogPosts}
-        currentPage={1}
-        totalPages={Math.ceil(posts.results.length / pageSize)}
+        posts={paginatedPosts}
+        currentPage={currentPage}
+        totalPages={totalPages}
         heading="Latest Posts"
-        disablePagination={true}
+        basePath="/blog"
+        disablePagination={false}
       />
     );
   }
@@ -129,11 +141,11 @@ export default async function Page(props: {
       .map(post => mapNotionPostToBlogPost(post, tags))
       .filter(Boolean);
 
-    const totalPages = Math.ceil(taggedPosts.length / pageSize);
-    const paginatedPosts = taggedPosts.slice(
-      (currentPage - 1) * pageSize,
-      currentPage * pageSize
-    );
+    // Apply pagination using the POSTS_PER_PAGE constant
+    const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+    const endIndex = startIndex + POSTS_PER_PAGE;
+    const paginatedPosts = taggedPosts.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(taggedPosts.length / POSTS_PER_PAGE);
 
     return (
       <PostList
@@ -146,27 +158,7 @@ export default async function Page(props: {
     );
   }
 
-  // Pagination (/page/2)
-  if (isPaginatedBlogPage(pageParams)) {
-    const currentPage = getPageNumber(pageParams);
-    const totalPages = Math.ceil(posts.results.length / pageSize);
-    const paginatedPosts = posts.results
-      .slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-      )
-      .map(post => mapNotionPostToBlogPost(post, tags))
-      .filter(Boolean);
-
-    return (
-      <PostList
-        posts={paginatedPosts}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        basePath="/blog"
-      />
-    );
-  }
+  // Pagination is now handled in the blog root page condition
 
   // 404 - Not Found
   return (
