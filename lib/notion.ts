@@ -10,27 +10,54 @@ export const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 export const notionCustom = new NotionCompatAPI(notion);
 
+export interface PageInfo {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  lastEditedAt: string;
+  cover?: string;
+  icon?: string | null;
+}
+
 export const getPage = async (pageId: string, allTags?: Tag[]) => {
   const recordMap = await notionCustom.getPage(pageId);
   const rawPage = (recordMap as any).raw?.page;
+  const properties = rawPage?.properties || {};
 
+  // Extract common page properties
+  const pageInfo: PageInfo = {
+    id: rawPage?.id || '',
+    title: properties?.Name?.title?.[0]?.plain_text || 'No title',
+    description: properties?.Description?.rich_text?.[0]?.plain_text || '',
+    createdAt: rawPage?.created_time || '',
+    lastEditedAt: rawPage?.last_edited_time || '',
+    cover: rawPage?.cover?.type === 'external' 
+      ? rawPage.cover.external.url 
+      : rawPage?.cover?.file?.url,
+    icon: rawPage?.icon?.type === 'emoji' 
+      ? rawPage.icon.emoji 
+      : rawPage?.icon?.file?.url || null
+  };
+
+  // Process tags if provided
   let blogTags: Tag[] = [];
-
   if (rawPage && allTags) {
-    const tagIds =
-      rawPage.properties?.Tags?.relation?.map((r: any) => r.id) || [];
-    blogTags = allTags.filter((tag) => tagIds.includes(tag.id));
+    const tagIds = properties?.Tags?.relation?.map((r: any) => r.id) || [];
+    blogTags = allTags.filter(tag => tagIds.includes(tag.id));
   }
 
   return {
     ...recordMap,
     blogTags,
+    pageInfo,
     raw: {
       ...(recordMap as any).raw,
       page: rawPage,
     },
   } as typeof recordMap & {
     blogTags: Tag[];
+    pageInfo: PageInfo;
     raw: {
       page: PageObjectResponse;
     };
