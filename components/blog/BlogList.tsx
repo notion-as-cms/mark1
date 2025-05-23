@@ -1,6 +1,6 @@
 import { PostList } from "./PostList";
 import { mapNotionPostToBlogPost } from "@/lib/notion-mappers";
-import type { BlogPost, BlogListProps, NotionPage, Tag } from "@/types/notion";
+import type { BlogPost, BlogListProps } from "@/types/notion";
 import { POSTS_PER_PAGE } from "@/lib/constants";
 
 export function BlogList({
@@ -12,15 +12,15 @@ export function BlogList({
   basePath = "/blog",
 }: BlogListProps) {
   const currentPage = isPaginated ? getPageNumber(pageParams) : 1;
-  
+
   // Map all posts, filtering out any null or invalid posts
   const allBlogPosts = posts
-    .map(post => mapNotionPostToBlogPost(post, tags))
+    .map((post) => mapNotionPostToBlogPost(post, tags))
     .filter((post): post is BlogPost => post !== null);
 
   // Calculate total pages based on all valid posts
   const totalPages = Math.ceil(allBlogPosts.length / POSTS_PER_PAGE);
-  
+
   // Apply pagination if enabled, otherwise show all posts
   const displayedPosts = isPaginated
     ? allBlogPosts.slice(

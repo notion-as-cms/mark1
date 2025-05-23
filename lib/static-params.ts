@@ -1,6 +1,5 @@
 import { getPublishedPosts, getTags } from "./notion";
 import { isNotionPage } from "./notion-mappers";
-import type { NotionPage } from "@/types/notion";
 
 type StaticParam = { slug: string[] };
 const POSTS_PER_PAGE = 3;
