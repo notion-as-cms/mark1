@@ -1,4 +1,4 @@
-import { Renderer } from "@/app/blog/[slug]/renderer";
+import { Renderer } from "./renderer";
 import type { ExtendedRecordMap } from "notion-types";
 import { TableOfContents } from "./TableOfContents";
 import { findPageBlock } from "@/lib/notion-utils";
