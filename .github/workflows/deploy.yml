@@ -79,6 +79,9 @@ jobs:
         run: pnpm build
         env:
           NEXT_PUBLIC_SITE_URL: notion-as-cms.github.io
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_BLOG_DATABASE_ID: ${{ secrets.NOTION_BLOG_DATABASE_ID }}
+          NOTION_TAG_DATABASE_ID: ${{ secrets.NOTION_TAG_DATABASE_ID }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
