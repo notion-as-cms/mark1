@@ -35,6 +35,7 @@
     "@tailwindcss/postcss": "^4.1.7",
     "@types/mdx": "^2.0.13",
     "@types/node": "22.15.19",
+    "@types/prismjs": "^1.26.5",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "notion-types": "^7.3.0",

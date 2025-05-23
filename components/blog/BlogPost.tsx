@@ -49,9 +49,9 @@ export function BlogPost({ recordMap }: BlogPostProps) {
         <div className="prose dark:prose-invert max-w-none">
           <Renderer
             recordMap={recordMap}
-            fullPage={true}
+            fullPage={false}
             darkMode={false}
-            showTableOfContents={true}
+            showTableOfContents={false}
           />
         </div>
       </div>
