@@ -7,6 +7,7 @@ import {
 } from "@/lib/notion";
 import { BlogPost } from "@/components/blog/BlogPost";
 import { generateBlogStaticParams } from "@/lib/static-params";
+import { PostList } from "@/components/blog/PostList";
 
 type NotionPage = {
   id: string;
@@ -16,6 +17,9 @@ type NotionPage = {
     };
     Description?: {
       rich_text: Array<{ plain_text: string }>;
+    };
+    Date?: {
+      date: { start: string };
     };
     Tags?: {
       type: "relation";
@@ -27,6 +31,27 @@ type NotionPage = {
 
 function isNotionPage(page: any): page is NotionPage {
   return page && typeof page === "object" && "properties" in page;
+}
+
+function mapNotionPostToBlogPost(post: any, tags: Tag[] = []): any {
+  if (!isNotionPage(post)) return null;
+
+  const tagIds = post.properties.Tags?.relation?.map((r: any) => r.id) || [];
+  const postTags = tags
+    .filter(tag => tagIds.includes(tag.id))
+    .map(tag => tag.label);
+
+  return {
+    id: post.id,
+    url: `/blog/${post.properties.Slug?.rich_text?.[0]?.plain_text || post.id}`,
+    data: {
+      title: post.properties.Name?.title?.[0]?.plain_text || 'Untitled',
+      description: post.properties.Description?.rich_text?.[0]?.plain_text || '',
+      date: post.properties.Date?.date?.start || new Date().toISOString(),
+      author: post.properties.Author?.people?.[0]?.name || undefined,
+      tags: postTags,
+    },
+  };
 }
 
 export { generateBlogStaticParams as generateStaticParams };
@@ -51,25 +76,22 @@ export default async function Page(props: {
   const posts = await getPublishedPosts();
   const tags = await getTags();
   const pageParams = { slug };
+  const pageSize = 5; // Should match POSTS_PER_PAGE from static-params.ts
 
   // Blog root page (/) - Show latest posts
   if (isBlogRootPage(pageParams)) {
+    const blogPosts = posts.results
+      .map(post => mapNotionPostToBlogPost(post, tags))
+      .filter(Boolean);
+
     return (
-      <div className="max-w-3xl mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-8">Latest Posts</h1>
-        <div className="space-y-8">
-          {posts.results.slice(0, 5).map((post: any) => (
-            <div key={post.id} className="border-b pb-6">
-              <h2 className="text-2xl font-semibold">
-                {post.properties.Name?.title?.[0]?.plain_text || "Untitled"}
-              </h2>
-              <p className="text-gray-600 mt-2">
-                {post.properties.Description?.rich_text?.[0]?.plain_text || ""}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <PostList
+        posts={blogPosts}
+        currentPage={1}
+        totalPages={Math.ceil(posts.results.length / pageSize)}
+        heading="Latest Posts"
+        disablePagination={true}
+      />
     );
   }
 
@@ -93,88 +115,56 @@ export default async function Page(props: {
     // Get current page number (default to 1 for non-paginated tag page)
     const currentPage = getPageNumber(pageParams);
 
-    // Filter posts by tag
-    const taggedPosts = posts.results.filter((post) => {
-      if (!isNotionPage(post)) return false;
-      const tagsProperty = post.properties.Tags;
-      if (tagsProperty?.type === "relation") {
-        const tagIds = tagsProperty.relation.map((r) => r.id);
-        return tagIds.includes(tag.id);
-      }
-      return false;
-    });
+    // Filter posts by tag and map to blog post format
+    const taggedPosts = posts.results
+      .filter((post) => {
+        if (!isNotionPage(post)) return false;
+        const tagsProperty = post.properties.Tags;
+        if (tagsProperty?.type === "relation") {
+          const tagIds = tagsProperty.relation.map((r) => r.id);
+          return tagIds.includes(tag.id);
+        }
+        return false;
+      })
+      .map(post => mapNotionPostToBlogPost(post, tags))
+      .filter(Boolean);
 
-    // Pagination
-    const postsPerPage = 5; // Should match POSTS_PER_PAGE from static-params.ts
-    const totalPages = Math.ceil(taggedPosts.length / postsPerPage);
-    const startIdx = (currentPage - 1) * postsPerPage;
-    const paginatedPosts = taggedPosts.slice(startIdx, startIdx + postsPerPage);
+    const totalPages = Math.ceil(taggedPosts.length / pageSize);
+    const paginatedPosts = taggedPosts.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize
+    );
 
     return (
-      <div className="max-w-3xl mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-8">
-          Posts tagged with: {tag.label}
-        </h1>
-
-        {/* Posts list */}
-        <div className="space-y-8 mb-8">
-          {paginatedPosts.map((post: any) => (
-            <div key={post.id} className="border-b pb-6">
-              <h2 className="text-2xl font-semibold">
-                {post.properties.Name?.title?.[0]?.plain_text || "Untitled"}
-              </h2>
-              <p className="text-gray-600 mt-2">
-                {post.properties.Description?.rich_text?.[0]?.plain_text || ""}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-8">
-            {currentPage > 1 ? (
-              <a
-                href={`/blog/tag/${tag.value}${
-                  currentPage > 2 ? `/page/${currentPage - 1}` : ""
-                }`}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
-              >
-                Previous
-              </a>
-            ) : (
-              <div />
-            )}
-
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-
-            {currentPage < totalPages ? (
-              <a
-                href={`/blog/tag/${tag.value}/page/${currentPage + 1}`}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
-              >
-                Next
-              </a>
-            ) : (
-              <div />
-            )}
-          </div>
-        )}
-      </div>
+      <PostList
+        posts={paginatedPosts}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        heading={`Posts tagged with: ${tag.label}`}
+        basePath={`/blog/tag/${tag.value}`}
+      />
     );
   }
 
   // Pagination (/page/2)
   if (isPaginatedBlogPage(pageParams)) {
-    const page = getPageNumber(pageParams);
+    const currentPage = getPageNumber(pageParams);
+    const totalPages = Math.ceil(posts.results.length / pageSize);
+    const paginatedPosts = posts.results
+      .slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+      )
+      .map(post => mapNotionPostToBlogPost(post, tags))
+      .filter(Boolean);
+
     return (
-      <div className="max-w-3xl mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-8">Page {page}</h1>
-        {/* TODO: Implement pagination */}
-        <pre>{JSON.stringify({ page }, null, 2)}</pre>
-      </div>
+      <PostList
+        posts={paginatedPosts}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        basePath="/blog"
+      />
     );
   }
 
