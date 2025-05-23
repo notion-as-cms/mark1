@@ -1,7 +1,23 @@
-import { getPublishedPosts, getTags } from "./notion";
+import { getPublishedPosts, getTags, type Tag } from "./notion";
 
 type StaticParam = { slug: string[] };
 const POSTS_PER_PAGE = 3;
+
+type NotionPage = {
+  id: string;
+  properties: {
+    Tags?: {
+      id: string;
+      type: 'relation';
+      relation: Array<{ id: string }>;
+    };
+    [key: string]: any;
+  };
+};
+
+function isNotionPage(page: any): page is NotionPage {
+  return page && typeof page === 'object' && 'properties' in page;
+}
 
 export async function generateBlogStaticParams() {
   const allParams: StaticParam[] = [];
@@ -55,18 +71,43 @@ function generatePostPathParams(posts: any[]): StaticParam[] {
 }
 
 async function generateTagPathParams(): Promise<StaticParam[]> {
-  const tags = await getTags();
-  const allParams: StaticParam[] = [];
+  const [tags, { results: posts }] = await Promise.all([
+    getTags(),
+    getPublishedPosts()
+  ]);
 
+  const allParams: StaticParam[] = [];
+  const tagPostCounts = new Map<string, number>();
+
+  // Count posts per tag
+  for (const post of posts) {
+    if (isNotionPage(post)) {
+      const tagsProperty = post.properties.Tags;
+      if (tagsProperty?.type === 'relation') {
+        const tagIds = tagsProperty.relation?.map((r) => r.id) || [];
+        tagIds.forEach((tagId: string) => {
+          tagPostCounts.set(tagId, (tagPostCounts.get(tagId) || 0) + 1);
+        });
+      }
+    }
+  }
+
+  // Generate paths for each tag
   for (const tag of tags) {
+    const postCount = tagPostCounts.get(tag.id) || 0;
+    
+    if (postCount === 0) continue;
+
     // Add tag page (/blog/tag/{tag-slug})
     allParams.push({ slug: ["tag", tag.value] });
 
-    // Add tag pagination pages (/blog/tag/{tag-slug}/page/2, etc.)
-    // Note: In a real implementation, you'd need to get the count of posts per tag
-    // For now, we'll assume 1 page per tag (no pagination)
-    // To implement pagination, you'd need to modify getTags to return post counts per tag
-    // and then generate pagination params similar to generateRootPathParams
+    // Add pagination pages if needed (/blog/tag/{tag-slug}/page/2, etc.)
+    const totalPages = Math.ceil(postCount / POSTS_PER_PAGE);
+    for (let i = 1; i < totalPages; i++) {
+      allParams.push({ 
+        slug: ["tag", tag.value, "page", (i + 1).toString()] 
+      });
+    }
   }
 
   return allParams;
