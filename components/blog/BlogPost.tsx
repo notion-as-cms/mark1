@@ -3,20 +3,34 @@ import { findPageBlock } from "@/lib/notion-utils";
 import { getPageTableOfContents } from "notion-utils";
 import Image from "next/image";
 import Link from "next/link";
-import type { BlogPostProps, Tag } from "@/types/notion";
+import type { Tag } from "@/types/notion";
 import {
   DocsPage,
   DocsBody,
   DocsDescription,
   DocsTitle,
 } from "fumadocs-ui/page";
+import type { ExtendedRecordMap } from "notion-types";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { cn } from "@/lib/utils";
+import { Calendar } from "lucide-react";
+
+// Update PageInfo type to include date
+interface PageInfo {
+  date?: string;
+  [key: string]: any;
+}
 
 interface TOCItemType {
   title: React.ReactNode;
   url: string;
   depth: number;
+}
+
+interface BlogPostProps {
+  recordMap: ExtendedRecordMap & {
+    pageInfo: PageInfo;
+  };
 }
 
 type TableOfContents = TOCItemType[];
@@ -61,6 +75,19 @@ export function BlogPost({ recordMap }: BlogPostProps) {
             />
           </div>
         )}
+
+        <div className="mb-4 text-gray-600 dark:text-gray-400 text-sm font-medium">
+          <div className="flex flex-wrap gap-3">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              {new Date(recordMap.block[Object.keys(recordMap.block)[0]]?.value?.last_edited_time || '').toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </span>
+          </div>
+        </div>
 
         <DocsTitle className="text-left dark:text-white">
           {title || "Untitled"}

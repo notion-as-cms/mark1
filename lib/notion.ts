@@ -16,26 +16,30 @@ export const getPage = async (pageId: string, allTags?: Tag[]) => {
   const rawPage = (recordMap as any).raw?.page;
   const properties = rawPage?.properties || {};
 
+  console.log("rawPage", rawPage);
+
   // Extract common page properties
   const pageInfo: PageInfo = {
-    id: rawPage?.id || '',
-    title: properties?.Name?.title?.[0]?.plain_text || 'No title',
-    description: properties?.Description?.rich_text?.[0]?.plain_text || '',
-    createdAt: rawPage?.created_time || '',
-    lastEditedAt: rawPage?.last_edited_time || '',
-    cover: rawPage?.cover?.type === 'external' 
-      ? rawPage.cover.external.url 
-      : rawPage?.cover?.file?.url,
-    icon: rawPage?.icon?.type === 'emoji' 
-      ? rawPage.icon.emoji 
-      : rawPage?.icon?.file?.url || null
+    id: rawPage?.id || "",
+    title: properties?.Name?.title?.[0]?.plain_text || "No title",
+    description: properties?.Description?.rich_text?.[0]?.plain_text || "",
+    createdAt: rawPage?.created_time || "",
+    lastEditedAt: rawPage?.last_edited_time || "",
+    cover:
+      rawPage?.cover?.type === "external"
+        ? rawPage.cover.external.url
+        : rawPage?.cover?.file?.url,
+    icon:
+      rawPage?.icon?.type === "emoji"
+        ? rawPage.icon.emoji
+        : rawPage?.icon?.file?.url || null,
   };
 
   // Process tags if provided
   let blogTags: Tag[] = [];
   if (rawPage && allTags) {
     const tagIds = properties?.Tags?.relation?.map((r: any) => r.id) || [];
-    blogTags = allTags.filter(tag => tagIds.includes(tag.id));
+    blogTags = allTags.filter((tag) => tagIds.includes(tag.id));
   }
 
   return {
@@ -92,37 +96,40 @@ export async function getPageBySlug(slug: string) {
 
 export function getPageInfo(page: PageObjectResponse): PageInfo {
   const properties = page.properties;
-  
+
   // Helper to get icon URL
   const getIconUrl = () => {
     if (!page.icon) return null;
-    
+
     switch (page.icon.type) {
-      case 'emoji':
+      case "emoji":
         return page.icon.emoji;
-      case 'external':
+      case "external":
         return page.icon.external.url;
-      case 'file':
+      case "file":
         return page.icon.file.url;
       default:
         return null;
     }
   };
-  
+
   return {
     id: page.id,
-    title: properties?.Name?.type === 'title' 
-      ? getPlainText(properties.Name.title) 
-      : 'No title',
-    description: properties?.Description?.type === 'rich_text'
-      ? getPlainText(properties.Description.rich_text)
-      : '',
+    title:
+      properties?.Name?.type === "title"
+        ? getPlainText(properties.Name.title)
+        : "No title",
+    description:
+      properties?.Description?.type === "rich_text"
+        ? getPlainText(properties.Description.rich_text)
+        : "",
     createdAt: page.created_time,
     lastEditedAt: page.last_edited_time,
-    cover: page.cover?.type === 'external' 
-      ? page.cover.external.url 
-      : (page.cover as any)?.file?.url, // Type assertion as cover type is complex
-    icon: getIconUrl()
+    cover:
+      page.cover?.type === "external"
+        ? page.cover.external.url
+        : (page.cover as any)?.file?.url, // Type assertion as cover type is complex
+    icon: getIconUrl(),
   };
 }
 
