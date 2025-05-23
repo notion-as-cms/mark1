@@ -10,6 +10,8 @@ export const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 export const notionCustom = new NotionCompatAPI(notion);
 
+export const getPage = notionCustom.getPage.bind(notionCustom);
+
 export async function getPublishedPosts() {
   return notion.databases.query({
     database_id: process.env.NOTION_BLOG_DATABASE_ID!,
