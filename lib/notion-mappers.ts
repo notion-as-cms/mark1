@@ -1,30 +1,5 @@
 import { Tag } from "@/lib/notion";
-import type { BlogPost } from "@/types/notion";
-
-type NotionPage = {
-  id: string;
-  properties: {
-    Name?: {
-      title: Array<{ plain_text: string }>;
-    };
-    Description?: {
-      rich_text: Array<{ plain_text: string }>;
-    };
-    Slug?: {
-      rich_text: Array<{ plain_text: string }>;
-    };
-    Date?: {
-      date: { start: string };
-    };
-    Author?: {
-      people: Array<{ name: string }>;
-    };
-    Tags?: {
-      relation: Array<{ id: string }>;
-    };
-    [key: string]: any;
-  };
-};
+import type { BlogPost, NotionPage } from "@/types/notion";
 
 export function isNotionPage(page: any): page is NotionPage {
   return page && typeof page === "object" && "properties" in page;
