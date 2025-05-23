@@ -11,7 +11,7 @@ export function BlogPost({ recordMap }: BlogPostProps) {
   const safeTags = (tags as Tag[]) || [];
 
   return (
-    <article className="max-w-4xl mx-auto">
+    <article className="max-w-6xl mx-auto">
       {/* Cover Image */}
       {cover && (
         <div className="relative w-full h-64 md:h-96 mb-8 rounded-lg overflow-hidden">
